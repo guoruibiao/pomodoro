@@ -24,6 +24,12 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     var timerBreak = Timer()
 
     let menu = NSMenu()
+    
+    // 弹强提醒框
+    let alerter = NSAlert()
+    
+    // 开启专注任务时，弹出提醒，尽量集中注意力，不中断
+    var needShowTip = true;
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
@@ -38,14 +44,14 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     }
     
     func constructMenu() {
-        menu.addItem(NSMenuItem(title: "Start Task",
+        menu.addItem(NSMenuItem(title: "开始专注",
                                 action: #selector(AppDelegate.update(_:)),
                                 keyEquivalent: "t"))
-        menu.addItem(NSMenuItem(title: "Start Break",
+        menu.addItem(NSMenuItem(title: "开始休息",
                                 action: #selector(AppDelegate.updateBreak(_:)),
                                 keyEquivalent: "b"))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Quit Pomodoro",
+        menu.addItem(NSMenuItem(title: "退出应用",
                                 action: #selector(NSApplication.terminate(_:)),
                                 keyEquivalent: "q"))
         
@@ -60,14 +66,23 @@ class AppDelegate: NSObject, NSApplicationDelegate,
                                          userInfo: nil,
                                          repeats: true)
             counterLock = true
-            renameTaskItem(item_name_old: "Start Task",
-                           item_name_new: "Stop Task",
+            renameTaskItem(item_name_old: "开始专注",
+                           item_name_new: "结束专注",
                            key_name: "t",
                            item_position: 0)
+            
+            
+            // 每次只在开启任务时，弹一次提醒
+            if needShowTip == true {
+                alerter.messageText = "本轮专注任务已开启!";
+                alerter.informativeText = "尽量在该番茄时钟内完成任务，不要中断它！！！";
+                alerter.runModal();
+                needShowTip = false;
+            }
         } else {
             reset()
-            renameTaskItem(item_name_old: "Stop Task",
-                           item_name_new: "Start Task",
+            renameTaskItem(item_name_old: "结束专注",
+                           item_name_new: "开始专注",
                            key_name: "t",
                            item_position: 0)
         }
@@ -81,14 +96,14 @@ class AppDelegate: NSObject, NSApplicationDelegate,
                                               userInfo: nil,
                                               repeats: true)
             breakLock = true
-            renameBreakItem(item_name_old: "Start Break",
-                            item_name_new: "Stop Break",
+            renameBreakItem(item_name_old: "开始休息",
+                            item_name_new: "结束休息",
                             key_name: "b",
                             item_position: 1)
         } else {
             reset()
-            renameBreakItem(item_name_old: "Stop Break",
-                            item_name_new: "Start Break",
+            renameBreakItem(item_name_old: "结束休息",
+                            item_name_new: "开始休息",
                             key_name: "b",
                             item_position: 1)
         }
@@ -121,6 +136,8 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         timerBreak.invalidate()
         counterLock = false
         breakLock = false
+        needShowTip = false
+        
         count = 1500
         countBreak = 300
     }
@@ -133,10 +150,10 @@ class AppDelegate: NSObject, NSApplicationDelegate,
             count -= 1
             print(countDownLabel)
         } else {
-            showNotification(content: "Your task is over. Time for a break!")
+            showNotification(content: "本轮专注已结束，休息一会吧~")
             reset()
-            renameTaskItem(item_name_old: "Stop Task",
-                           item_name_new: "Start Task",
+            renameTaskItem(item_name_old: "停止专注",
+                           item_name_new: "开启专注",
                            key_name: "t",
                            item_position: 0)
         }
@@ -150,10 +167,10 @@ class AppDelegate: NSObject, NSApplicationDelegate,
             countBreak -= 1
             print(countDownLabel)
         } else {
-            showNotification(content: "Your break is over. Time for a new task!")
+            showNotification(content: "本轮休息已结束，准备下一轮专注吧！")
             reset()
-            renameBreakItem(item_name_old: "Stop Break",
-                            item_name_new: "Start Break",
+            renameBreakItem(item_name_old: "停止休息",
+                            item_name_new: "开始休息",
                             key_name: "b",
                             item_position: 1)
         }
@@ -169,6 +186,11 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         notification.soundName = NSUserNotificationDefaultSoundName
 
         _ = NSUserNotificationCenter.default.deliver(notification)
+        
+        // todo delete 添加弹窗提醒
+        alerter.messageText = "时间到！！！";
+        alerter.informativeText = "可以休息 5 分钟了";
+        alerter.runModal();
     }
 }
 
